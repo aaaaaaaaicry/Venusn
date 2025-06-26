@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DarkPen Store - Mercado Negro de Canetas</title>
+<style>
+  /* Básico dark theme */
+  body {
+    background-color: #220044;
+    color: #cc99ff;
+    font-family: 'Consolas', monospace;
+    margin: 0; padding: 0;
+  }
+  header {
+    background-color: #440077;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  #logo {
+    font-size: 1.8rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+    user-select: none;
+  }
+  button {
+    background: #cc33ff;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    color: #111;
+    font-weight: 700;
+    cursor: pointer;
+    margin-left: 10px;
+  }
+  button:hover {
+    background: #ff55ff;
+  }
+  main {
+    padding: 20px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  #productGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill,minmax(220px,1fr));
+    gap: 15px;
+  }
+  .productCard {
+    background: #440066;
+    border-radius: 10px;
+    padding: 12px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.3s;
+  }
+  .productCard:hover,
+  .productCard:focus {
+    background: #550088;
+    outline: none;
+  }
+  .productCard img {
+    width: 100%;
+    border-radius: 6px;
+  }
+  .price, .stock {
+    margin-top: 8px;
+    font-weight: 600;
+  }
+  .price {
+    color: #ee66ff;
+  }
+  #buyMsg {
+    margin-top: 10px;
+    font-weight: 700;
+  }
+
+  /* Modal Produto */
+  #productModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(34,0,68,0.95);
+    backdrop-filter: blur(3px);
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+  }
+  #productModalContent {
+    background: #330055;
+    border-radius: 10px;
+    max-width: 800px;
+    width: 95%;
+    display: flex;
+    padding: 20px;
+    gap: 20px;
+    color: #cc99ff;
+  }
+  #productModalContent img.mainImg {
+    width: 50%;
+    border-radius: 8px;
+  }
+  #productDetails {
+    flex-grow: 1;
+  }
+  #productDetails h2 {
+    margin-top: 0;
+  }
+  #productDetails .price {
+    font-size: 1.4rem;
+    margin: 15px 0 5px 0;
+  }
+  #productDetails .stock {
+    margin-bottom: 15px;
+  }
+  #btnBuyProduct {
+    background: #cc33ff;
+    color: #111;
+    font-weight: 700;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+  }
+  #btnBuyProduct:disabled {
+    background: #440066;
+    cursor: not-allowed;
+  }
+  #modalCloseBtn {
+    position: absolute;
+    right: 30px;
+    top: 30px;
+    background: transparent;
+    border: none;
+    font-size: 2rem;
+    color: #cc99ff;
+    cursor: pointer;
+  }
+
+  /* Modal Login */
+  #loginModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(34,0,68,0.85);
+    z-index: 10500;
+    justify-content: center;
+    align-items: center;
+    color: #cc99ff;
+  }
+  #loginContent {
+    background: #330055;
+    padding: 25px;
+    border-radius: 8px;
+    width: 320px;
+  }
+  #loginContent input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 6px;
+    border: none;
+  }
+  #loginContent button {
+    margin-top: 15px;
+    width: 100%;
+    padding: 12px;
+    background: #cc33ff;
+    border: none;
+    color: #111;
+    font-weight: 700;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  #loginContent button:hover {
+    background: #ff55ff;
+  }
+  #loginError {
+    margin-top: 10px;
+    color: #ff4444;
+    height: 20px;
+  }
+
+  /* Painel Admin */
+  #adminPanel {
+    display: none;
+    background: #220044;
+    padding: 20px;
+    margin: 20px auto;
+    max-width: 960px;
+    border-radius: 10px;
+    color: #cc99ff;
+  }
+  #adminPanel label {
+    display: block;
+    margin-top: 12px;
+  }
+  #adminPanel input,
+  #adminPanel textarea {
+    width: 100%;
+    padding: 8px;
+    border-radius: 5px;
+    border: none;
+    margin-top: 4px;
+  }
+  #adminPanel textarea {
+    resize: vertical;
+  }
+  #adminPanel button {
+    margin-top: 15px;
+    width: 100%;
+    padding: 12px;
+    background: #cc33ff;
+    border: none;
+    color: #111;
+    font-weight: 700;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  #adminPanel button:hover {
+    background: #ff55ff;
+  }
+  #adminProductsList {
+    margin-top: 15px;
+  }
+  .adminProductItem {
+    background: #440066;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .adminProductItem button {
+    margin-left: 8px;
+    background: #550088;
+    padding: 6px 10px;
+    font-size: 0.9rem;
+  }
+  .adminProductItem button:hover {
+    background: #cc33ff;
+    color: #000;
+  }
+  #adminOrdersList {
+    margin-top: 20px;
+  }
+  .adminOrderItem {
+    background: #220044;
+    margin-bottom: 12px;
+    border-radius: 6px;
+    padding: 10px;
+  }
+  .adminOrderItem p {
+    margin: 4px 0;
+  }
+  .orderButtons button {
+    margin-right: 10px;
+    padding: 6px 10px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    font-weight: 600;
+  }
+  .btnApprove {
+    background: #44aa44;
+    color: white;
+  }
+  .btnReject {
+    background: #aa4444;
+    color: white;
+  }
+
+  /* Pedidos do cliente */
+  #clientOrders {
+    margin-top: 30px;
+    background: #220044;
+    padding: 15px;
+    border-radius: 8px;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+    color: #cc99ff;
+  }
+  #clientOrders h3 {
+    margin-top: 0;
+  }
+  #clientOrders ul {
+    list-style: none;
+    padding-left: 0;
+  }
+  #clientOrders li {
+    background: #330066;
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+  }
+
+</style>
+</head>
+<body>
+
+<header>
+  <h1 id="logo">DarkPen Store</h1>
+  <div>
+    <button id="btnOpenLogin">Login</button>
+    <button id="btnLogout" style="display:none;">Sair</button>
+    <button id="btnOpenAdmin" style="display:none;">Admin</button>
+  </div>
+</header>
+
+<main>
+  <div id="productGrid"></div>
+  <div id="buyMsg"></div>
+
+  <div id="clientOrders" style="display:none;">
+    <h3>Seus Pedidos Aprovados</h3>
+    <ul id="clientOrdersList"></ul>
+  </div>
+</main>
+
+<!-- Modal Produto -->
+<div id="productModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="productTitle">
+  <button id="modalCloseBtn" aria-label="Fechar">&times;</button>
+  <div id="productModalContent">
+    <img src="" alt="" class="mainImg" id="modalMainImg" />
+    <div id="productDetails">
+      <h2 id="productTitle"></h2>
+      <p id="productDesc"></p>
+      <div class="price" id="productPrice"></div>
+      <div class="stock" id="productStock"></div>
+      <button id="btnBuyProduct">Comprar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Login -->
+<div id="loginModal" style="display:none;">
+  <div id="loginContent">
+    <h2>Login</h2>
+    <input type="password" id="inputSenha" placeholder="Digite a senha" autocomplete="off" />
+    <button id="btnLogin">Entrar</button>
+    <div id="loginError"></div>
+  </div>
+</div>
+
+<!-- Modal Nome do Usuário -->
+<div id="nameModal" style="display:none; position:fixed; inset:0; background: rgba(0,0,0,0.85); color:#ff99ff; font-family: monospace; z-index: 11000; justify-content: center; align-items: center;">
+  <div style="background:#220044; padding: 20px; border-radius: 8px; width: 300px; text-align:center;">
+    <h2>Informe seu nome</h2>
+    <input id="inputUserName" type="text" placeholder="Seu nome" style="width:100%; padding: 10px; border-radius:6px; border:none; margin-top: 10px;"/>
+    <button id="btnUserNameSubmit" style="margin-top: 15px; padding: 10px; background:#cc33ff; color:#111; font-weight:bold; border:none; border-radius:6px; cursor:pointer;">Confirmar</button>
+    <div id="nameError" style="color:#ff4444; margin-top:8px; height:20px;"></div>
+  </div>
+</div>
+
+<!-- Painel Admin -->
+<section id="adminPanel">
+  <h2>Painel Admin</h2>
+  <label>Nome do Produto:
+    <input type="text" id="adminProductName" />
+  </label>
+  <label>Descrição:
+    <textarea id="adminProductDesc" rows="3"></textarea>
+  </label>
+  <label>Preço (R$):
+    <input type="number" id="adminProductPrice" min="0.01" step="0.01" />
+  </label>
+  <label>URLs das imagens (separe por vírgula):
+    <input type="text" id="adminProductImages" />
+  </label>
+  <label>Estoque:
+    <input type="number" id="adminProductStock" min="0" step="1" />
+  </label>
+  <button id="btnAddProduct">Adicionar Produto</button>
+
+  <h3>Produtos Cadastrados</h3>
+  <div id="adminProductsList"></div>
+
+  <h3>Pedidos Pendentes</h3>
+  <div id="adminOrdersList"></div>
+</section>
+
+<script>
+  // Variáveis globais
+  let products = [];
+  let selectedProduct = null;
+  let token = null;
+  let role = null;
+  let userId = localStorage.getItem('userId') || null;
+
+  // Elementos
+  const productGrid = document.getElementById('productGrid');
+  const productModal = document.getElementById('productModal');
+  const modalCloseBtn = document.getElementById('modalCloseBtn');
+  const modalMainImg = document.getElementById('modalMainImg');
+  const productTitle = document.getElementById('productTitle');
+  const productDesc = document.getElementById('productDesc');
+  const productPrice = document.getElementById('productPrice');
+  const productStock = document.getElementById('productStock');
+  const btnBuyProduct = document.getElementById('btnBuyProduct');
+  const buyMsg = document.getElementById('buyMsg');
+  const btnOpenLogin = document.getElementById('btnOpenLogin');
+  const btnLogout = document.getElementById('btnLogout');
+  const loginModal = document.getElementById('loginModal');
+  const inputSenha = document.getElementById('inputSenha');
+  const btnLogin = document.getElementById('btnLogin');
+  const loginError = document.getElementById('loginError');
+  const btnOpenAdmin = document.getElementById('btnOpenAdmin');
+  const adminPanel = document.getElementById('adminPanel');
+  const adminProductName = document.getElementById('adminProductName');
+  const adminProductDesc = document.getElementById('adminProductDesc');
+  const adminProductPrice = document.getElementById('adminProductPrice');
+  const adminProductImages = document.getElementById('adminProductImages');
+  const adminProductStock = document.getElementById('adminProductStock');
+  const btnAddProduct = document.getElementById('btnAddProduct');
+  const adminProductsList = document.getElementById('adminProductsList');
+  const adminOrdersList = document.getElementById('adminOrdersList');
+  const clientOrders = document.getElementById('clientOrders');
+  const clientOrdersList = document.getElementById('clientOrdersList');
+
+  // Modal nome usuário
+  const nameModal = document.getElementById('nameModal');
+  const inputUserName = document.getElementById('inputUserName');
+  const btnUserNameSubmit = document.getElementById('btnUserNameSubmit');
+  const nameError = document.getElementById('nameError');
+
+  // Funções auxiliares
+  async function fetchWithAuth(url, options={}) {
+    options.headers = options.headers || {};
+    if(role === 'admin') {
+      options.headers['X-Admin-Token'] = token;
+    }
+    if(options.body && typeof options.body !== 'string') {
+      options.body = JSON.stringify(options.body);
+      options.headers['Content-Type'] = 'application/json';
+    }
+    const res = await fetch(url, options);
+    if(res.status === 401 || res.status === 403) {
+      alert('Não autorizado. Faça login novamente.');
+      logout();
+    }
+    return res;
+  }
+
+  // Carregar produtos
+  async function loadProducts() {
+    const res = await fetch('/api/products');
+    products = await res.json();
+    productGrid.innerHTML = '';
+    if(products.length === 0) {
+      productGrid.innerHTML = '<p>Nenhum produto disponível.</p>';
+      return;
+    }
+    products.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'productCard';
+      card.tabIndex = 0;
+      card.innerHTML = `
+        <img src="${p.images.length > 0 ? p.images[0] : 'https://via.placeholder.com/300?text=No+Image'}" alt="${p.name}" />
+        <h3>${p.name}</h3>
+        <div class="price">R$ ${p.price.toFixed(2)}</div>
+        <div class="stock">Estoque: ${p.stock}</div>
+      `;
+      card.onclick = () => openProductModal(p);
+      card.onkeypress = (e) => { if(e.key === 'Enter') openProductModal(p); };
+      productGrid.appendChild(card);
+    });
+  }
+
+  // Abrir modal produto
+  function openProductModal(p) {
+    selectedProduct = p;
+    modalMainImg.src = p.images.length > 0 ? p.images[0] : 'https://via.placeholder.com/600?text=No+Image';
+    modalMainImg.alt = p.name;
+    productTitle.textContent = p.name;
+    productDesc.textContent = p.description;
+    productPrice.textContent = `R$ ${p.price.toFixed(2)}`;
+    productStock.textContent = `Estoque: ${p.stock}`;
+    buyMsg.textContent = '';
+    btnBuyProduct.disabled = p.stock <= 0 || role !== 'user';
+    productModal.style.display = 'flex';
+  }
+
+  modalCloseBtn.onclick = () => {
+    productModal.style.display = 'none';
+  };
+  window.onclick = (e) => {
+    if(e.target === productModal) productModal.style.display = 'none';
+    if(e.target === loginModal) loginModal.style.display = 'none';
+    if(e.target === nameModal) nameModal.style.display = 'none';
+  };
+
+  // Login
+  btnOpenLogin.onclick = () => {
+    loginModal.style.display = 'flex';
+    inputSenha.value = '';
+    loginError.textContent = '';
+    inputSenha.focus();
+  };
+  btnLogin.onclick = async () => {
+    const senha = inputSenha.value.trim();
+    if(!senha) return;
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({senha})
+    });
+    if(res.ok) {
+      const data = await res.json();
+      role = data.role;
+      token = senha;
+      loginModal.style.display = 'none';
+      btnOpenLogin.style.display = 'none';
+      btnLogout.style.display = 'inline-block';
+      buyMsg.textContent = '';
+      if(role === 'admin') {
+        btnOpenAdmin.style.display = 'inline-block';
+        adminPanel.style.display = 'none';
+      } else {
+        btnOpenAdmin.style.display = 'none';
+        adminPanel.style.display = 'none';
+      }
+      if(role === 'user') {
+        clientOrders.style.display = 'block';
+        loadClientOrders();
+      } else {
+        clientOrders.style.display = 'none';
+      }
+      loadProducts();
+    } else {
+      loginError.textContent = 'Senha incorreta.';
+    }
+  };
+  btnLogout.onclick = () => {
+    logout();
+  };
+  function logout() {
+    role = null;
+    token = null;
+    userId = null;
+    localStorage.removeItem('userId');
+    btnOpenLogin.style.display = 'inline-block';
+    btnLogout.style.display = 'none';
+    btnOpenAdmin.style.display = 'none';
+    adminPanel.style.display = 'none';
+    clientOrders.style.display = 'none';
+    buyMsg.textContent = '';
+    loadProducts();
+  }
+
+  // Comprar produto com verificação nome usuário
+  async function openNameModal() {
+    inputUserName.value = '';
+    nameError.textContent = '';
+    nameModal.style.display = 'flex';
+    inputUserName.focus();
+  }
+
+  btnUserNameSubmit.onclick = () => {
+    const name = inputUserName.value.trim();
+    if(name.length < 2) {
+      nameError.textContent = 'Digite um nome válido (mínimo 2 caracteres).';
+      return;
+    }
+    userId = name;
+    localStorage.setItem('userId', userId);
+    nameModal.style.display = 'none';
+    comprarProduto();
+  };
+
+  async function comprarProduto() {
+    if(!selectedProduct) return;
+    if(!token || role === null) {
+      buyMsg.style.color = 'orange';
+      buyMsg.textContent = 'Você precisa fazer login para comprar.';
+      return;
+    }
+    buyMsg.style.color = '#44ff44';
+    buyMsg.textContent = 'Enviando pedido...';
+
+    const res = await fetch('/api/orders', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        senha: token,
+        product_id: selectedProduct.id,
+        user_id: userId
+      })
+    });
+    if(res.ok) {
+      buyMsg.style.color = '#44ff44';
+      buyMsg.textContent = 'Pedido realizado! Aguarde aprovação.';
+      productModal.style.display = 'none';
+      if(role === 'user') loadClientOrders();
+      if(role === 'admin') loadAdminOrders();
+      loadProducts();
+    } else {
+      const err = await res.json();
+      buyMsg.style.color = 'red';
+      buyMsg.textContent = err.error || 'Erro ao fazer pedido.';
+    }
+  }
+
+  btnBuyProduct.onclick = () => {
+    if(!userId) {
+      openNameModal();
+    } else {
+      comprarProduto();
+    }
+  };
+
+  // Painel Admin
+  btnOpenAdmin.onclick = () => {
+    if(adminPanel.style.display === 'block') {
+      adminPanel.style.display = 'none';
+    } else {
+      adminPanel.style.display = 'block';
+      loadAdminData();
+    }
+  };
+
+  // Carregar dados do admin (produtos e pedidos pendentes)
+  async function loadAdminData() {
+    await loadAdminProducts();
+    await loadAdminOrders();
+  }
+
+  // Admin produtos
+  async function loadAdminProducts() {
+    const res = await fetchWithAuth('/api/products');
+    if(!res.ok) return;
+    const prods = await res.json();
+    adminProductsList.innerHTML = '';
+    prods.forEach(p => {
+      const div = document.createElement('div');
+      div.className = 'adminProductItem';
+      div.innerHTML = `
+        <div>
+          <strong>${p.name}</strong> - R$ ${p.price.toFixed(2)} - Estoque: ${p.stock}
+        </div>
+        <div>
+          <button class="btnEdit">Editar</button>
+          <button class="btnDel">Excluir</button>
+        </div>
+      `;
+      div.querySelector('.btnEdit').onclick = () => {
+        adminProductName.value = p.name;
+        adminProductDesc.value = p.description;
+        adminProductPrice.value = p.price;
+        adminProductImages.value = p.images.join(',');
+        adminProductStock.value = p.stock;
+        selectedProduct = p;
+      };
+      div.querySelector('.btnDel').onclick = async () => {
+        if(!confirm('Excluir este produto?')) return;
+        const res = await fetchWithAuth(`/api/admin/products/${p.id}`, {method: 'DELETE'});
+        if(res.ok) {
+          alert('Produto excluído');
+          selectedProduct = null;
+          loadAdminProducts();
+          loadProducts();
+        } else {
+          alert('Erro ao excluir produto');
+        }
+      };
+      adminProductsList.appendChild(div);
+    });
+  }
+
+  // Adicionar/editar produto
+  btnAddProduct.onclick = async () => {
+    const name = adminProductName.value.trim();
+    const description = adminProductDesc.value.trim();
+    const price = parseFloat(adminProductPrice.value);
+    const images = adminProductImages.value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+    const stock = parseInt(adminProductStock.value);
+    if(!name || price <= 0 || isNaN(stock) || stock < 0) {
+      alert('Preencha os dados corretamente.');
+      return;
+    }
+
+    if(selectedProduct && selectedProduct.id) {
+      // Editar
+      const res = await fetchWithAuth(`/api/admin/products/${selectedProduct.id}`, {
+        method: 'PUT',
+        body: {
+          name, description, price, images, stock
+        }
+      });
+      if(res.ok) {
+        alert('Produto atualizado');
+        selectedProduct = null;
+        loadAdminProducts();
+        loadProducts();
+        adminProductName.value = '';
+        adminProductDesc.value = '';
+        adminProductPrice.value = '';
+        adminProductImages.value = '';
+        adminProductStock.value = '';
+      } else {
+        alert('Erro ao atualizar produto');
+      }
+    } else {
+      // Adicionar
+      const res = await fetchWithAuth('/api/admin/products', {
+        method: 'POST',
+        body: {
+          name, description, price, images, stock
+        }
+      });
+      if(res.ok) {
+        alert('Produto adicionado');
+        loadAdminProducts();
+        loadProducts();
+        adminProductName.value = '';
+        adminProductDesc.value = '';
+        adminProductPrice.value = '';
+        adminProductImages.value = '';
+        adminProductStock.value = '';
+      } else {
+        alert('Erro ao adicionar produto');
+      }
+    }
+  };
+
+  // Admin pedidos pendentes
+  async function loadAdminOrders() {
+    const res = await fetchWithAuth('/api/admin/orders');
+    if(!res.ok) {
+      adminOrdersList.innerHTML = '<p>Erro ao carregar pedidos.</p>';
+      return;
+    }
+    const orders = await res.json();
+    if(orders.length === 0) {
+      adminOrdersList.innerHTML = '<p>Nenhum pedido pendente</p>';
+      return;
+    }
+    adminOrdersList.innerHTML = '';
+    orders.forEach(ord => {
+      const div = document.createElement('div');
+      div.className = 'adminOrderItem';
+      div.innerHTML = `
+        <p><strong>Pedido #${ord.order_id}</strong> - Produto: ${ord.product_name} - R$ ${ord.product_price.toFixed(2)}</p>
+        <p>Usuário: ${ord.user_id}</p>
+        <p>Data: ${new Date(ord.date).toLocaleString()}</p>
+        <p>Estoque atual do produto: ${ord.product_stock}</p>
+        <div class="orderButtons">
+          <button class="btnApprove">Aprovar</button>
+          <button class="btnReject">Reprovar</button>
+        </div>
+      `;
+      const btnApprove = div.querySelector('.btnApprove');
+      const btnReject = div.querySelector('.btnReject');
+
+      btnApprove.onclick = async () => {
+        if(!confirm('Aprovar este pedido?')) return;
+        const res = await fetchWithAuth(`/api/admin/orders/${ord.order_id}`, {
+          method: 'PUT',
+          body: {status:'aprovado'}
+        });
+        if(res.ok) {
+          loadAdminOrders();
+          loadProducts();
+        } else {
+          alert('Erro ao aprovar pedido');
+        }
+      };
+      btnReject.onclick = async () => {
+        if(!confirm('Reprovar este pedido?')) return;
+        const res = await fetchWithAuth(`/api/admin/orders/${ord.order_id}`, {
+          method: 'PUT',
+          body: {status:'reprovado'}
+        });
+        if(res.ok) {
+          loadAdminOrders();
+        } else {
+          alert('Erro ao reprovar pedido');
+        }
+      };
+
+      adminOrdersList.appendChild(div);
+    });
+  }
+
+  // Cliente: listar pedidos aprovados
+  async function loadClientOrders() {
+    if(!userId) return;
+    const res = await fetch(`/api/orders/${userId}`);
+    if(!res.ok) return;
+    const orders = await res.json();
+    clientOrdersList.innerHTML = '';
+    if(orders.length === 0) {
+      clientOrdersList.innerHTML = '<li>Nenhum pedido aprovado</li>';
+      return;
+    }
+    orders.forEach(ord => {
+      const li = document.createElement('li');
+      li.textContent = `Pedido #${ord.order_id} - Produto: ${ord.product_name} - R$ ${ord.product_price.toFixed(2)} - Data: ${new Date(ord.date).toLocaleString()}`;
+      clientOrdersList.appendChild(li);
+    });
+  }
+
+  // Carregar produtos ao iniciar
+  loadProducts();
+
+</script>
+
+</body>
+</html>
